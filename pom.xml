@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>by.epam</groupId>
-	<artifactId>FirstRestApp</artifactId>
+	<artifactId>WeatherSensor</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>FirstRestApp</name>
 	<description>Demo project for Spring Boot</description>

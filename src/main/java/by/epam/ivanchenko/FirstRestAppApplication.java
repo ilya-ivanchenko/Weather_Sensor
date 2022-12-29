@@ -8,7 +8,12 @@ import org.springframework.context.annotation.Bean;
 @SpringBootApplication
 public class FirstRestAppApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(FirstRestAppApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(FirstRestAppApplication.class, args);
+    }
+
+    @Bean
+    public ModelMapper modelMapper() {
+        return new ModelMapper();
+    }
 }
