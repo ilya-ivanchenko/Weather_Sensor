@@ -10,27 +10,27 @@ public class MeasurementDTO {
     @NotNull
     @Min(value = -100, message = "Temperature value must be between -100 and 100 degrees")
     @Max(value = 100, message = "Temperature value must be between -100 and 100 degrees")
-    private double value;
+    private Double value;
 
     @NotNull
-    private boolean raining;
+    private Boolean raining;
 
     private Sensor sensor;
 
-    public double getValue() {
+    public Double getValue() {
         return value;
     }
 
-    public void setValue(double value) {
+    public void setValue(Double value) {
         this.value = value;
     }
 
 
-    public boolean IsRaining() {
+    public Boolean getRaining() {
         return raining;
     }
 
-    public void setRaining(boolean raining) {
+    public void setRaining(Boolean raining) {
         this.raining = raining;
     }
 
@@ -41,4 +41,5 @@ public class MeasurementDTO {
     public void setSensor(Sensor sensor) {
         this.sensor = sensor;
     }
+
 }

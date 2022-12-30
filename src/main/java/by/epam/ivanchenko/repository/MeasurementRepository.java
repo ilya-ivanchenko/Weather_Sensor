@@ -9,6 +9,4 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Repository
 public interface MeasurementRepository extends JpaRepository<Measurement, Integer> {
 
-
-
 }

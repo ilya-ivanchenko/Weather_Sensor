@@ -1,22 +1,26 @@
 package by.epam.ivanchenko.controller;
 
 import by.epam.ivanchenko.dto.MeasurementDTO;
+import by.epam.ivanchenko.dto.MeasurementResponse;
 import by.epam.ivanchenko.model.Measurement;
 import by.epam.ivanchenko.service.MeasurementService;
-import by.epam.ivanchenko.util.MeasurementAddingException;
+import by.epam.ivanchenko.util.ErrorReturn;
+import by.epam.ivanchenko.util.MeasurementException;
 import by.epam.ivanchenko.util.MeasurementErrorResponse;
+import by.epam.ivanchenko.util.MeasurementValidator;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static by.epam.ivanchenko.util.ErrorReturn.returnErrorsToClient;
 
 @RestController
 @RequestMapping("/measurements")
@@ -24,34 +28,32 @@ public class MeasurementController {
 
     private final MeasurementService measurementService;
     private final ModelMapper modelMapper;
+    private final MeasurementValidator measurementValidator;
 
     @Autowired
-    public MeasurementController(MeasurementService measurementService, ModelMapper modelMapper) {
+    public MeasurementController(MeasurementService measurementService, ModelMapper modelMapper, MeasurementValidator measurementValidator) {
         this.measurementService = measurementService;
         this.modelMapper = modelMapper;
+        this.measurementValidator = measurementValidator;
     }
 
     @GetMapping
-    public List<MeasurementDTO> getMeasurements() {
-        return measurementService.findAll().stream().map(this::convertToMeasurementDTO).collect(Collectors.toList());
+    public MeasurementResponse getMeasurements() {                                                                                       // Return object, not a list of objects
+        return new MeasurementResponse(measurementService.findAll().stream().map(this::convertToMeasurementDTO).collect(Collectors.toList()));
     }
 
     @PostMapping("/add")
     public ResponseEntity<HttpStatus> add(@RequestBody @Valid MeasurementDTO measurementDTO, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            StringBuilder errorMessage = new StringBuilder();
 
-            List<FieldError> errors = bindingResult.getFieldErrors();
-            for (FieldError error : errors) {
-                errorMessage.append(error.getField())
-                        .append(" - ")
-                        .append(error.getDefaultMessage())
-                        .append(";");
-            }
-            throw new MeasurementAddingException(errorMessage.toString());
+        Measurement measurement = convertToMeasurement(measurementDTO);
+
+        measurementValidator.validate(measurement, bindingResult);
+
+        if (bindingResult.hasErrors()) {
+            returnErrorsToClient(bindingResult);
         }
 
-        measurementService.save(convertToMeasurement(measurementDTO));
+        measurementService.save(measurement);
 
         return ResponseEntity.ok(HttpStatus.OK);
     }
@@ -62,7 +64,7 @@ public class MeasurementController {
     }
 
     @ExceptionHandler
-    public ResponseEntity<MeasurementErrorResponse> handleException(MeasurementAddingException exception) {
+    public ResponseEntity<MeasurementErrorResponse> handleException(MeasurementException exception) {
         MeasurementErrorResponse response = new MeasurementErrorResponse(exception.getMessage(), LocalDateTime.now());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }

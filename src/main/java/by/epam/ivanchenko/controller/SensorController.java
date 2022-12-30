@@ -3,15 +3,13 @@ package by.epam.ivanchenko.controller;
 import by.epam.ivanchenko.dto.SensorDTO;
 import by.epam.ivanchenko.model.Sensor;
 import by.epam.ivanchenko.service.SensorService;
-import by.epam.ivanchenko.util.SensorErrorResponse;
-import by.epam.ivanchenko.util.SensorRegistrationException;
+import by.epam.ivanchenko.util.*;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -24,11 +22,13 @@ public class SensorController {
 
     private final SensorService sensorService;
     private final ModelMapper modelMapper;
+    private final SensorValidator sensorValidator;
 
     @Autowired
-    public SensorController(SensorService sensorService, ModelMapper modelMapper) {
+    public SensorController(SensorService sensorService, ModelMapper modelMapper, SensorValidator sensorValidator) {
         this.sensorService = sensorService;
         this.modelMapper = modelMapper;
+        this.sensorValidator = sensorValidator;
     }
 
     @GetMapping
@@ -39,27 +39,23 @@ public class SensorController {
     @PostMapping("/registration")
     public ResponseEntity<HttpStatus> registration(@RequestBody @Valid SensorDTO sensorDTO, BindingResult bindingResult) {
 
-        if (bindingResult.hasErrors()) {
-            StringBuilder errorMessage = new StringBuilder();
+        Sensor sensor = convertToSensor(sensorDTO);
 
-            List<FieldError> errors = bindingResult.getFieldErrors();
-            for (FieldError error : errors) {
-                errorMessage.append(error.getField())
-                        .append(" - ")
-                        .append(error.getDefaultMessage())
-                        .append(";");
-            }
-            throw new SensorRegistrationException(errorMessage.toString());
+        sensorValidator.validate(sensor, bindingResult);
+
+        if (bindingResult.hasErrors()) {
+            ErrorReturn.returnErrorsToClient(bindingResult);
         }
 
-        sensorService.save(convertToSensor(sensorDTO));
+        sensorService.save(sensor);
 
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
     @ExceptionHandler
-    public ResponseEntity<SensorErrorResponse> handleException(SensorRegistrationException exception) {
-        SensorErrorResponse response = new SensorErrorResponse(exception.getMessage(), LocalDateTime.now());
+    public ResponseEntity<MeasurementErrorResponse> handleException(MeasurementException exception) {
+        MeasurementErrorResponse response = new MeasurementErrorResponse(exception.getMessage(), LocalDateTime.now());
+
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
